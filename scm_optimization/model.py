@@ -19,6 +19,10 @@ def rv_str(rv):
 
 
 class UsageModel:
+    """
+        A base class for other item usage classes that represent the item usage distribution.
+        This class just overloads a some basic built in functions.
+    """
     def __lt__(self, other):
         if self.name < other.name:
             return True
@@ -39,15 +43,36 @@ class UsageModel:
 
 
 class PoissonUsageModel(UsageModel):
+    """
+        A class to represent the Poisson item usage model.
+        Attributes
+        ----------
+        name : str
+            A string to provide a human readable way of identifying the usage model.
+        scale : float
+            The mean item usage when the information state is 1.
+        trunk : float
+            The amount to truncate off the right tail of the poisson distribution.
+            Should be 0 <= trunk < 1. Typically less than 1e-3.
+
+    """
     def __init__(self, scale=1, trunk=1e-5):
         self.name = "Poisson {} {}".format(str(scale), str(trunk))
         self.scale = scale
         self.trunk = trunk
 
     def usage(self, o):
+        """
+        :param o: information state
+        :return: Pacal distribution object that represents the item usage random variable
+        """
         return pacal.PoissonDistr(o * self.scale, trunk_eps=self.trunk)
 
     def random(self, o=1):
+        """
+        :param o: informaton state
+        :return: random integer value representing the of items consumed
+        """
         fail = True
         while fail:
             try:
@@ -60,6 +85,17 @@ class PoissonUsageModel(UsageModel):
 
 
 class BinomUsageModel(UsageModel):
+    """
+        A class to represent the Binomial item usage model.
+        Attributes
+        ----------
+        name : str
+            A string to provide a human readable way of identifying the usage model
+        n: int
+            n in the binomial distribution, i.e. number of trials
+        p : float
+            p in the binomial distribution, i.e. probability of a success
+    """
     def __init__(self, n=1, p=0.5):
         self.name = "Binom {} {}".format(str(n), str(p))
         self.n = n
@@ -67,9 +103,17 @@ class BinomUsageModel(UsageModel):
         self.trunk = 1e-5
 
     def usage(self, o):
+        """
+        :param o: information state
+        :return: Pacal distribution object that represents the item usage random variable
+        """
         return pacal.BinomialDistr(int(o * self.n), p=self.p)
 
     def random(self, o=1):
+        """
+        :param o: informaton state
+        :return: random integer value representing the of items consumed
+        """
         return numpy.random.binomial(o * self.n, self.p)
 
 
@@ -86,6 +130,33 @@ class DeterministUsageModel(UsageModel):
 
 
 class ModelConfig:
+    """
+        A class used to store configurations of an MDP experiment.
+
+        Some of the model parameters that this class encapsulates
+        ----------------------
+        gamma : float
+            discount factor in a MDP
+        lead_time : int
+            the item ordering lead time
+        info_state_rvs : list of Pacal.DiscreteDistribution
+            The information process, the first element is the bookings made at the start of today for today,
+            The second element is the bookings made at the start of the period for the next periods, etc..
+        holding_cost: float
+            Per unit cost incurred on excess inventory at end of period
+        backlogging_cost: float
+            Per unit cost incurred for carrying a backlog at end of period
+        setup_cost: float
+            Cost incurred for placing a non-zero order
+        unit_price: float
+            Per unit cost of purchasing items to stock
+        horizon: int
+            Number of periods of ABI, this information is also encapsulated by info_state_rvs, so supply only one
+        info_rv: Pacal.DiscreteDistribution
+            The information process, required if horizon is used.
+        usage_model: UsageModel
+            Item usage model
+    """
     def __init__(self,
                  gamma=0.9,
                  lead_time=0,
@@ -131,7 +202,10 @@ class ModelConfig:
 
 
 class StationaryOptModel:
-
+    """
+        A class to represent the finite horizon  MDP for a stationary problem where the booking process is the same for
+        all periods.
+    """
     @classmethod
     def read_pickle(cls, filename):
         with open(filename, "rb") as f:
@@ -264,20 +338,6 @@ class StationaryOptModel:
         else:
             self.info_states()
             return self.info_states_prob_cache[o]
-
-    # def lambda_t(self, o):
-    #     return o[0] + self.info_state_rvs[-1]
-    # # O_t^L in notation
-    # def observed_lt_info(self, o):
-    #     return sum(o[0: self.lead_time + 1])
-    #
-    # # U_t^L in notation
-    # def unobserved_lt_info(self, o):
-    #     return sum(self.info_state_rvs[self.lead_time:])
-    #
-    # # \Lambda_t^L in notation
-    # def lt_info_state(self, o):
-    #     return self.observed_lt_info(o) + self.unobserved_lt_info(o)
 
     # D_t^L | \Lambda_t in notation
     def lt_demand(self, lt_o):
@@ -580,6 +640,7 @@ def run_config(args):
     model.to_pickle("{}_{}/{}".format(date.today().isoformat(), config.label, config.sub_label))
     return model
 
+
 def run_configs(configs, ts, xs, pools=4):
     print("Starting {} Runs: {}".format(str(len(configs)), datetime.now().isoformat()))
     Pool(pools).map(run_config, list((config, ts, xs) for config in configs))
@@ -590,76 +651,4 @@ def run_configs(configs, ts, xs, pools=4):
     for config in configs:
         os.remove(config.results_fn)
 
-
-if __name__ == "__main__":
-    gamma = 0.9
-    lead_time = 0
-    horizon = 2
-    info_state_rvs = [pacal.ConstDistr(0),
-                      pacal.ConstDistr(0),
-                      #pacal.DiscreteDistr([1, 2, 19, 20], [0.25, 0.25, 0.25, 0.25])
-                      pacal.PoissonDistr(5, trunk_eps=1e-3) ]
-    holding_cost = 1
-    backlogging_cost = 10
-    setup_cost = 5
-    unit_price = 0
-    usage_model = PoissonUsageModel(scale=1)
-    # usage_model = lambda o: pacal.ConstDistr(o)
-    # usage_model = lambda o: pacal.PoissonDistr(o, trunk_eps=1e-3)
-    # sage_model = None
-    model = StationaryOptModel(gamma,
-                               lead_time,
-                               info_state_rvs,
-                               holding_cost,
-                               backlogging_cost,
-                               setup_cost,
-                               unit_price,
-                               usage_model=usage_model)
-
-    # t, x, o = model.state_transition(10, 10, (3, 2))
-
-    # s = time.time()
-    # print(model.j_function(1, 0, (3, 2)))
-    # print("run time:", time.time() - s)
-    # s = time.time()
-    # print(model.j_function(2, 0, (3, 2)))
-    # print("run time:", time.time() - s)
-    # s = time.time()
-    # print(model.j_function(3, 0, (3, 2)))
-    # print("run time:", time.time() - s)
-    # s = time.time()
-    # print(model.j_function(4, 0, (3, 2)))
-    # print("run time:", time.time() - s)
-    # s = time.time()
-    # print(model.j_function(5, 0, (3, 2)))
-    # print("run time:", time.time() - s)
-    # s = time.time()
-
-    s = time.time()
-    model.compute_policies_parallel(0)
-    model.compute_j_value_parallel(0)
-    model.compute_policies_parallel(1)
-    model.compute_j_value_parallel(1)
-    model.compute_policies_parallel(2)
-    model.compute_j_value_parallel(2)
-    print("run time:", time.time() - s)
-    print(model.value_function_j)
-    max_x = max(key[1] for key in model.value_function_j.keys())
-    print(max_x)
-
-    model = StationaryOptModel(gamma,
-                               lead_time,
-                               info_state_rvs,
-                               holding_cost,
-                               backlogging_cost,
-                               setup_cost,
-                               unit_price,
-                               usage_model=usage_model)
-    s = time.time()
-    for t in range(3):
-        for o in model.info_states():
-            for x in range(max_x+1):
-                model.j_function(t, x, o)
-    print("run time:", time.time() - s)
-    print(model.value_function_j)
 

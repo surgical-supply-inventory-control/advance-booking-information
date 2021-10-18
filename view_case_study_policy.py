@@ -1,12 +1,12 @@
 import pickle
 from pprint import pprint
 if __name__ == '__main__':
-    item = "ItemA"
+    item = "47320"
     backlogging_cost = 100
-    lead_time = 2
+    lead_time = 1
     info = 2
 
-    with open("model_artifact/case_study_policy/ns_policy_id_ItemA_b_100_lt_0_info_2.pickle", "rb") as f:
+    with open(f"model_artifact/case_study_policy/ns_policy_id_{item}_b_{backlogging_cost}_lt_{lead_time}_info_{info}.pickle", "rb") as f:
         policy = pickle.load(f)
 
     days = {0: "Monday",
