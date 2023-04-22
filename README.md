@@ -1,23 +1,37 @@
-# advance-booking-information
-Demo code on studying the value of advanced information in management of surgical supplies in hospitals.
+# Steps for Setup
+In order to be able to run the scripts, the working directory should be properly specified. This can be done by updating the directory variable in prepare.py
+ 
+# Solving MDP
+	# Stationary Demand
+		- Under stationary surgery distribution specify parameters in mdp_configs.py 
+		- Run mdp_configs.py script python mdp_configs.py
+	# Nonstationary Demand
+		- Under nonstationary surgery distribution specify parameters in ns_mdp_configs.py 
+		- Run mdp_configs.py script python ns_mdp_configs.py
+		- The resulting policy and value functions is saved under the provided label
 
-Four demo scripts have been prepared to demonstrate this project.
-
-1. run_basic_mdp_experiment.py
-2. run_case_study_mdp.py
-3. run_case_study_simulation.py
-4. view_case_study_policy.py
-
-The run_basic_mdp_experiment script shows how to run one of the basic experiments with Poisson item 
-usage and Binomial booking distribution. The number of periods of ABI used, leadtime and costs 
-can be easily changed as desired.
-
-The run run_case_study_mdp script shows how to run the mdp to get a policy for one of the 5 items
-in the case study. Note that as the raw data can not be shared, the script loads the 
-pre-constructed information process represented by the info_state_rvs attribute of the model class 
-from a pickle file.
-
-The run_case_study_simulation script shows how to run the case study simulation for one of the 5
-items in the case study. As solving the backward induction is time consuming and the model files are
-very large after solving, the model's policy is stored as a pickle file and can be viewed using the 
-view_case_study_policy script. 
+# Running Simulations
+	# Running given policies
+		- Specify policy, cost parameters, item demand distribution and surgery distributions in run_simulation.py
+		- Run run_simulation.py script python run_simulation.py
+		- If policy, item demand distributions and surgery distributions are stored in a pickle file:
+			- Specify the directories in the proper locations in run_empirical_case_study_simulation.py
+			- Run run_empirical_case_study_simulation.py script python run_empirical_case_study_simulation.py
+	# Running approximation algorithms Dual Balancing (DB) and Look Ahead (LA)
+		# Look Ahead (LA)
+			- Specify the policy parameters in dual_balancing_extension/run_la_sim_args.py
+			- Run dual_balancing_extension/run_la_sim_args.py script python dual_balancing_extension/run_la_sim_args.py
+		# Dual Balancing (DB)
+			- Specify the policy parameters in dual_balancing_extension/run_db_sim_args.py
+			- Run dual_balancing_extension/run_db_sim_args.py script python dual_balancing_extension/run_db_sim_args.py
+		
+# Exact evaluation of approximation algorithms Dual Balancing (DB) and Look Ahead (LA)
+	- Source code for the exact evaluation is provided under scm_optimization/heuristic_models
+	# Dual Balancing (DB)
+		- Specify the parameters in dual_balancing_extension/run_db_exact.py
+		- Run run_db_exact.py script python dual_balancing_extension/run_db_exact.py
+		- Resulting objective is printed at the end of the evaluation
+	# Look Ahead (LA)
+		- Specify the parameters in dual_balancing_extension/run_la_exact.py
+		- Run run_db_exact.py script python dual_balancing_extension/run_la_exact.py
+		- Resulting objective is printed at the end of the evaluation
