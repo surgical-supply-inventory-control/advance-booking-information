@@ -83,12 +83,10 @@ def run_la_policy(args):
     start_time = time.time()
     item_id, b, n, lt, seed = args
     
-    elective_info_state_rv = pacal.ConstDistr(0)
+    elective_info_state_rv = elective_info_rvs[item_id]
     emergency_info_state_rv = emergency_info_rvs[item_id]
-    info_state_rvs = [[emergency_info_rvs[item_id], pacal.ConstDistr(0)]]
-
-
-    horizon = 2
+    
+    horizon = n
     if elective_info_state_rv and emergency_info_state_rv:
         ns_info_state_rvs = []
         # 0..4 Weekdays, 5, 6 weekdays
