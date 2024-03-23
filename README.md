@@ -1,3 +1,6 @@
+# Abot
+Complete code for the case study in "Inventory Management with Advance Booking Information: The Case of Surgical Supplies and Elective Surgeries" By J Chan, B Görgülü, V Sarhangian (2024). DOI: https://doi.org/10.1287/msom.2021.0063
+
 # Steps for Setup
 In order to run the scripts, the working directory should be properly specified. This can be done by updating the directory variable in prepare.py
  
